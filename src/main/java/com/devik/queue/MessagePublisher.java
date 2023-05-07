@@ -18,9 +18,4 @@ public class MessagePublisher {
     public void publish(String message) {
         template.convertAndSend(Constants.exchangeName, Constants.queueName, message);
     }
-
-//    @EventListener(ApplicationReadyEvent.class)
-//    public void clearQueue(){
-//        template.receiveAndConvert(Constants.queueName);
-//    }
 }
