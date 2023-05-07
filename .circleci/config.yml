@@ -1,0 +1,27 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/maven:3.8.1-jdk-11
+    working_directory: ~/app
+    steps:
+      - checkout
+      - run: mvn clean install
+  deploy:
+    docker:
+      - image: docker/compose:1.29.2
+    working_directory: ~/app
+    steps:
+      - checkout
+      - run: docker-compose up -d
+workflows:
+  version: 2
+  build-and-deploy:
+    jobs:
+      - build
+      - deploy:
+          requires:
+            - build
+          filters:
+            branches:
+              only: main
