@@ -10,6 +10,7 @@ import com.rabbitmq.client.Channel;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.support.AmqpHeaders;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Component;
 
@@ -18,13 +19,12 @@ import java.util.Optional;
 
 @Component
 @Slf4j
-public record MessageListener(
-        Scrapper scrapper,
-        Crawler crawler,
-        SearchService searchService) {
+public record MessageListener(Scrapper scrapper,
+                              @Qualifier(value = "ElasticCrawler") Crawler crawler,
+                              SearchService searchService) {
 
     @RabbitListener(queues = Constants.queueName)
-    public void handle(String url, Channel channel, @Header(AmqpHeaders.DELIVERY_TAG) long tag) {
+    public void handle(String url, @Header(AmqpHeaders.DELIVERY_TAG) long tag) {
 
         log.info("Processing message:{}, tag:{}", url, tag);
         final Optional<ScrapedModel> optionalScrapedModel = scrapper.scrap(url);
@@ -38,7 +38,7 @@ public record MessageListener(
                 searchService.submitCrawlRequest(optionalScrapedModel.get().getLinks());
             }
             log.info("Message processed");
-            channel.basicAck(tag, false);
+            //channel.basicAck(tag, false);
         } catch (Exception ex) {
             log.error("Error while handling the message:", ex);
         }

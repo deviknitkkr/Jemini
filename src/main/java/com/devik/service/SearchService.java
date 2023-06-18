@@ -3,6 +3,7 @@ package com.devik.service;
 import com.devik.crawl.Crawler;
 import com.devik.model.Article;
 import com.devik.queue.MessagePublisher;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -14,7 +15,7 @@ public class SearchService {
     private final MessagePublisher publisher;
     private final Crawler crawler;
 
-    public SearchService(MessagePublisher publisher, Crawler crawler) {
+    public SearchService(MessagePublisher publisher,@Qualifier("ElasticCrawler") Crawler crawler) {
         this.publisher = publisher;
         this.crawler = crawler;
     }

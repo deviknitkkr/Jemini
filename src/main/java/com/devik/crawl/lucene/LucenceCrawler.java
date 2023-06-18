@@ -1,5 +1,6 @@
-package com.devik.crawl;
+package com.devik.crawl.lucene;
 
+import com.devik.crawl.Crawler;
 import com.devik.model.Article;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -17,7 +18,6 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
@@ -25,7 +25,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-@Component
+@Component("LucenceCrawler")
 @Slf4j
 public class LucenceCrawler implements Crawler {
 
@@ -87,7 +87,7 @@ public class LucenceCrawler implements Crawler {
         return results;
     }
 
-    @Scheduled(cron = "0/30 * * * * *")
+//    @Scheduled(cron = "0/30 * * * * *")
     public void printIndexedItemCount() throws Exception {
         IndexReader indexReader = DirectoryReader.open(directory);
         int numDocs = indexReader.numDocs();
