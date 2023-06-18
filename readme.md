@@ -27,10 +27,9 @@ Note: If you encounter any issues while running the application, please refer to
 ## Usage
 1. Clone the repository to your local machine.
 2. Open the project in your preferred IDE.
-3. Start the RabbitMQ server.
-4. Build and run the application.
-5. Submit URLs to the `/api/crawl` endpoint.
-6. Submit queries to the `/api/search?q=` endpoint.
+3. Build and run the application.
+4. Submit URLs to the `/api/crawl` endpoint. 
+5. Submit queries to the `/api/search?q=` endpoint.
 
 ## Contributing
 1. Fork the repository.
