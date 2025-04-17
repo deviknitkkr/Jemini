@@ -1,4 +1,4 @@
 
-docker rmi -f internal-search-engine_app
+docker rmi -f jemini-app
 mvn package -DskipTests
 docker compose up

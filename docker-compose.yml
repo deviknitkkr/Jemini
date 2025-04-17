@@ -1,57 +1,64 @@
-version: '3'
+version: '3.8'
+
 services:
   app:
     build: .
     restart: on-failure
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/postgres
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: postgres
-      SPRING_RABBITMQ_HOST: rabbitmq
     ports:
       - "8080:8080"
     depends_on:
-      - db
-      - rabbitmq
-      - elasticsearch
-    networks:
-      - search-engine
-
-  db:
-    image: postgres:13.3-alpine
+      elasticsearch:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: postgres
-    volumes:
-      - db_data:/var/lib/postgresql/data
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      - ELASTICSEARCH_HOST=elasticsearch
+      - RABBITMQ_USERNAME=admin
+      - RABBITMQ_PASSWORD=root
     networks:
-      - search-engine
-
-  rabbitmq:
-    image: rabbitmq:3.9.5-alpine
-    hostname: rabbitmq
-    environment:
-      RABBITMQ_DEFAULT_USER: admin
-      RABBITMQ_DEFAULT_PASS: root
-    ports:
-      - "15672:15672"
-      - "5672:5672"
-    networks:
-      - search-engine
+      - crawler-network
 
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:7.13.2
-    ports:
-      - 9200:9200
     environment:
       - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+    volumes:
+      - es-data:/usr/share/elasticsearch/data
     networks:
-      - search-engine
+      - crawler-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9200"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-volumes:
-  db_data:
+  rabbitmq:
+    image: rabbitmq:3.9.5-alpine
+    ports:
+      - "5672:5672"  # AMQP port
+      - "15672:15672"  # Management UI
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: root
+    networks:
+      - crawler-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 networks:
-  search-engine:
+  crawler-network:
     driver: bridge
+
+volumes:
+  es-data:
+  rabbitmq-data:

@@ -1,0 +1,21 @@
+spring:
+  application:
+    name: crawler-app
+  rabbitmq:
+    host: rabbitmq
+    port: 5672
+    username: admin
+    password: root
+
+elasticsearch:
+  host: elasticsearch
+  port: 9200
+
+server:
+  port: 8080
+
+crawler:
+  queue:
+    name: crawl-tasks
+  index:
+    strategy: elasticsearch # Options: elasticsearch, llm
