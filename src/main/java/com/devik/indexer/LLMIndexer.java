@@ -2,54 +2,58 @@ package com.devik.indexer;
 
 import com.devik.model.CrawlResult;
 import com.devik.model.SearchRequest;
+import com.devik.repository.vector.VectorStore;
+import com.devik.service.embedder.EmbeddingService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
 
+@Slf4j
 @Component
 public class LLMIndexer implements IndexerStrategy {
 
-    // This is a placeholder for an actual LLM-based indexing implementation
-    // In a real implementation, you would integrate with a vector database or LLM service
-    private final Map<String, CrawlResult> documents = new HashMap<>();
+    private final EmbeddingService embeddingService;
+    private final VectorStore vectorStore;
+
+    @Autowired
+    public LLMIndexer(EmbeddingService embeddingService, VectorStore vectorStore) {
+        this.embeddingService = embeddingService;
+        this.vectorStore = vectorStore;
+    }
 
     @Override
     public void indexDocument(CrawlResult result) {
-        // In a real implementation, this would:
-        // 1. Extract embeddings from the document using an LLM
-        // 2. Store the embeddings and document in a vector database
-        documents.put(result.getId(), result);
+
+        log.info("Indexing document:{}", result.getUrl());
+        // 1. Generate embedding for the document content
+        String content = result.getContent().substring(0, Math.min(result.getContent().length(), 1000));
+        List<Float> embedding = embeddingService.embed(content);
+
+        // 2. Save embedding and metadata into the vector store
+        Map<String, Object> metadata = Map.of(
+                "url", result.getUrl(),
+                "title", result.getTitle(),
+                "content", content,
+                "crawledAt", result.getCrawledAt().toString()
+        );
+
+        vectorStore.insert(result.getId(), toPrimitiveArray(embedding), metadata);
     }
 
     @Override
     public List<Map<String, Object>> search(SearchRequest request) {
-        // In a real implementation, this would:
-        // 1. Generate an embedding for the query using an LLM
-        // 2. Find semantically similar documents in the vector database
+        List<Float> queryEmbedding = embeddingService.embed(request.getQuery());
+        return vectorStore.query(queryEmbedding, request.getLimit());
+    }
 
-        // This is a simplified mock implementation
-        List<Map<String, Object>> results = new ArrayList<>();
-        for (CrawlResult result : documents.values()) {
-            // Simple keyword matching (in a real implementation, this would be semantic matching)
-            if (result.getContent().toLowerCase().contains(request.getQuery().toLowerCase()) ||
-                    result.getTitle().toLowerCase().contains(request.getQuery().toLowerCase())) {
-
-                Map<String, Object> document = new HashMap<>();
-                document.put("id", result.getId());
-                document.put("url", result.getUrl());
-                document.put("title", result.getTitle());
-                document.put("content", result.getContent().substring(0, Math.min(200, result.getContent().length())) + "...");
-                document.put("crawledAt", result.getCrawledAt().toString());
-                document.put("score", 1.0); // Placeholder score
-
-                results.add(document);
-            }
+    private float[] toPrimitiveArray(List<Float> list) {
+        float[] array = new float[list.size()];
+        for (int i = 0; i < list.size(); i++) {
+            array[i] = list.get(i);
         }
-
-        // Sort by "relevance" and paginate
-        int start = request.getPage() * request.getLimit();
-        int end = Math.min(start + request.getLimit(), results.size());
-
-        return start < results.size() ? results.subList(start, end) : Collections.emptyList();
+        return array;
     }
 }

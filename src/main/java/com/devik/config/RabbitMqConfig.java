@@ -10,6 +10,6 @@ public class RabbitMqConfig {
 
     @Bean
     public Queue crawlTasksQueue(@Value("${crawler.queue.name}") String queueName) {
-        return new Queue(queueName, true);
+        return new Queue(queueName, false, false, true);
     }
 }

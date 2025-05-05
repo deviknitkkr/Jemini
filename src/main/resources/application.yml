@@ -1,11 +1,17 @@
 spring:
   application:
     name: crawler-app
+
   rabbitmq:
     host: rabbitmq
     port: 5672
     username: admin
     password: root
+
+  redis:
+    enabled: true
+    host: redis
+    port: 6379
 
 elasticsearch:
   host: elasticsearch
@@ -16,6 +22,6 @@ server:
 
 crawler:
   queue:
-    name: crawl-tasks
+    name: crawl-task
   index:
-    strategy: elasticsearch # Options: elasticsearch, llm
+    strategy: llm  # Options: elasticsearch, llm

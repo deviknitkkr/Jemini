@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jemini Search</title>
+  <style>
+    :root {
+      --primary-color: #4285f4;
+      --text-color: #333;
+      --light-gray: #f8f9fa;
+      --mid-gray: #dadce0;
+      --dark-gray: #5f6368;
+      --transition-speed: 0.4s;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background-color: var(--light-gray);
+      color: var(--text-color);
+      line-height: 1.6;
+    }
+
+    .container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 60vh;
+      padding: 0 20px;
+      transition: all var(--transition-speed) cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .container.top {
+      min-height: 20vh;
+    }
+
+    .logo {
+      font-size: 2.8rem;
+      font-weight: bold;
+      color: var(--primary-color);
+      margin-bottom: 2rem;
+      letter-spacing: -1px;
+      transition: all var(--transition-speed) cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .container.top .logo {
+      font-size: 1.8rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .search-container {
+      width: 100%;
+      max-width: 600px;
+      position: relative;
+    }
+
+    .search-bar {
+      display: flex;
+      width: 100%;
+      border-radius: 24px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      transition: all var(--transition-speed) ease;
+    }
+
+    .search-bar:hover, .search-bar:focus-within {
+      box-shadow: 0 3px 15px rgba(66, 133, 244, 0.2);
+    }
+
+    input[type="text"] {
+      flex: 1;
+      padding: 15px 20px;
+      font-size: 16px;
+      border: 1px solid var(--mid-gray);
+      border-radius: 24px 0 0 24px;
+      outline: none;
+      transition: border var(--transition-speed) ease;
+    }
+
+    input[type="text"]:focus {
+      border-color: var(--primary-color);
+    }
+
+    button {
+      padding: 0 28px;
+      font-size: 16px;
+      border: none;
+      background-color: var(--primary-color);
+      color: white;
+      border-radius: 0 24px 24px 0;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #2b6ed9;
+    }
+
+    .results-container {
+      width: 100%;
+      max-width: 700px;
+      margin-top: 3rem;
+      padding: 0 20px;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all var(--transition-speed) ease;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .results-container.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .result {
+      background-color: white;
+      padding: 1.2rem 1.5rem;
+      margin-bottom: 1rem;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+      transition: transform 0.3s ease;
+    }
+
+    .result:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 3px 6px rgba(0, 0, 0, 0.12);
+    }
+
+    .result a {
+      color: var(--primary-color);
+      font-size: 16px;
+      font-weight: 500;
+      display: block;
+      margin-bottom: 8px;
+      text-decoration: none;
+      transition: color 0.2s ease;
+    }
+
+    .result a:hover {
+      color: #2b6ed9;
+      text-decoration: underline;
+    }
+
+    .result p {
+      margin: 0;
+      color: var(--dark-gray);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    /* Removed the .typing class styles that created the cursor animation */
+
+    .pagination {
+      display: flex;
+      justify-content: center;
+      margin: 2rem 0;
+      gap: 1rem;
+    }
+
+    .pagination button {
+      padding: 10px 16px;
+      border-radius: 20px;
+      background-color: white;
+      color: var(--primary-color);
+      border: 1px solid var(--mid-gray);
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .pagination button:hover:not([disabled]) {
+      background-color: #f1f5fe;
+      border-color: var(--primary-color);
+    }
+
+    .pagination button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .pagination span {
+      display: flex;
+      align-items: center;
+      color: var(--dark-gray);
+    }
+
+    .nav {
+      position: absolute;
+      top: 20px;
+      right: 40px;
+    }
+
+    .nav a {
+      padding: 8px 16px;
+      text-decoration: none;
+      font-weight: 500;
+      color: var(--primary-color);
+      border-radius: 4px;
+      transition: background-color 0.2s ease;
+    }
+
+    .nav a:hover {
+      background-color: rgba(66, 133, 244, 0.1);
+    }
+
+    /* Animation for search bot effect */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .bot-thinking {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 2rem auto;
+      width: 100px;
+    }
+
+    .dot {
+      height: 10px;
+      width: 10px;
+      margin: 0 5px;
+      background-color: var(--primary-color);
+      border-radius: 50%;
+      display: inline-block;
+      animation: pulse 1.5s infinite ease-in-out;
+    }
+
+    .dot:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+
+    .dot:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(0.8); opacity: 0.5; }
+      50% { transform: scale(1.2); opacity: 1; }
+      100% { transform: scale(0.8); opacity: 0.5; }
+    }
+
+    @media (max-width: 768px) {
+      .logo {
+        font-size: 2.2rem;
+      }
+
+      .container.top .logo {
+        font-size: 1.5rem;
+      }
+
+      .search-bar {
+        flex-direction: column;
+        border-radius: 12px;
+      }
+
+      input[type="text"] {
+        width: 100%;
+        border-radius: 12px 12px 0 0;
+      }
+
+      button {
+        width: 100%;
+        border-radius: 0 0 12px 12px;
+        padding: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="nav">
+  <a href="/admin.html">Admin</a>
+</div>
+
+<div class="container" id="searchContainer">
+  <div class="logo">Jemini Search</div>
+  <div class="search-container">
+    <div class="search-bar">
+      <input type="text" id="queryInput" placeholder="Ask me anything...">
+      <button onclick="performSearch()">Search</button>
+    </div>
+  </div>
+</div>
+
+<div class="results-container" id="resultsContainer">
+  <div id="botThinking" class="bot-thinking" style="display:none">
+    <div class="dot"></div>
+    <div class="dot"></div>
+    <div class="dot"></div>
+  </div>
+  <div id="results"></div>
+  <div id="pagination" class="pagination"></div>
+</div>
+
+<script>
+  const container = document.getElementById('searchContainer');
+  const queryInput = document.getElementById('queryInput');
+  const resultsDiv = document.getElementById('results');
+  const paginationDiv = document.getElementById('pagination');
+  const resultsContainer = document.getElementById('resultsContainer');
+  const botThinking = document.getElementById('botThinking');
+
+  let currentPage = 0;
+  const limit = 10;
+
+  queryInput.addEventListener("keypress", function (event) {
+      if (event.key === "Enter") {
+          currentPage = 0;
+          performSearch();
+      }
+  });
+
+  function truncateContent(content, wordLimit = 30) {
+      const words = content.split(/\s+/);
+      return words.length > wordLimit
+          ? words.slice(0, wordLimit).join(' ') + '...'
+          : content;
+  }
+
+  async function performSearch() {
+    const query = queryInput.value.trim();
+    if (!query) return;
+
+    // Show the "thinking" animation
+    container.classList.add('top');
+    resultsContainer.classList.remove('visible');
+    botThinking.style.display = 'flex';
+    resultsDiv.innerHTML = '';
+    paginationDiv.innerHTML = '';
+
+    const payload = {
+        query: query,
+        limit: limit,
+        page: currentPage
+    };
+
+    try {
+        // Add artificial delay of at least 500ms
+        const startTime = Date.now();
+
+        // Make the API request
+        const responsePromise = fetch('/api/search', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        // Create a promise that resolves after 300ms
+        const delayPromise = new Promise(resolve => setTimeout(resolve, 300));
+
+        // Wait for both the API request and the minimum delay
+        const [response] = await Promise.all([responsePromise, delayPromise]);
+
+        // Calculate actual time elapsed for logging purposes (optional)
+        const elapsedTime = Date.now() - startTime;
+        console.log(`Search took ${elapsedTime}ms (including artificial delay)`);
+
+        const results = await response.json();
+
+        // Hide thinking indicator
+        botThinking.style.display = 'none';
+
+        if (results.length === 0) {
+            resultsDiv.innerHTML = "<div class='result'><p>No results found. Try modifying your search.</p></div>";
+            resultsContainer.classList.add('visible');
+            return;
+        }
+
+        // Add results with staggered appearance but no typing animation
+        displayResultsSequentially(results);
+
+        // Show pagination only at the bottom
+        if (results.length > 0) {
+            paginationDiv.innerHTML = `
+                <button onclick="prevPage()" ${currentPage === 0 ? "disabled" : ""}>← Previous</button>
+                <span>Page ${currentPage + 1}</span>
+                <button onclick="nextPage()" ${results.length < limit ? "disabled" : ""}>Next →</button>
+            `;
+        }
+
+        resultsContainer.classList.add('visible');
+
+    } catch (error) {
+        botThinking.style.display = 'none';
+        resultsDiv.innerHTML = `<div class='result'><p>Error: ${error.message}</p></div>`;
+        resultsContainer.classList.add('visible');
+    }
+}
+
+  function displayResultsSequentially(results) {
+      results.forEach((result, index) => {
+          setTimeout(() => {
+              const div = document.createElement("div");
+              div.className = "result";
+              div.style.animation = `fadeIn 0.1s ease forwards`;
+              div.style.animationDelay = `${index * 0.1}s`;
+              div.style.opacity = "0";
+
+              const link = document.createElement("a");
+              link.href = result.url;
+              link.target = "_blank";
+              link.textContent = result.url;
+
+              const para = document.createElement("p");
+              // Removed the typing class to eliminate the cursor animation
+              para.textContent = truncateContent(result.content);
+
+              div.appendChild(link);
+              div.appendChild(para);
+              resultsDiv.appendChild(div);
+          }, index * 150);
+      });
+  }
+
+  function nextPage() {
+      currentPage++;
+      performSearch();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function prevPage() {
+      if (currentPage > 0) {
+          currentPage--;
+          performSearch();
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+  }
+
+  // Focus on search input on page load
+  window.onload = function() {
+      queryInput.focus();
+  };
+</script>
+
+</body>
+</html>

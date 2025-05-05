@@ -2,6 +2,7 @@ package com.devik.indexer;
 
 
 import com.devik.model.CrawlResult;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.search.SearchRequest;
@@ -30,6 +31,7 @@ public class ElasticSearchIndexer implements IndexerStrategy {
     @Autowired
     private RestHighLevelClient client;
     private static final String INDEX_NAME = "web_pages";
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @PostConstruct
     public void initialize() {
@@ -58,7 +60,7 @@ public class ElasticSearchIndexer implements IndexerStrategy {
             document.put("crawledAt", result.getCrawledAt().toString());
 
             IndexRequest indexRequest = new IndexRequest(INDEX_NAME)
-                    .id(result.getId())
+                    .id(result.getId().toString())
                     .source(document, XContentType.JSON);
 
             client.index(indexRequest, RequestOptions.DEFAULT);
@@ -87,17 +89,30 @@ public class ElasticSearchIndexer implements IndexerStrategy {
 
             SearchResponse response = client.search(searchRequest, RequestOptions.DEFAULT);
 
-            List<Map<String, Object>> results = new ArrayList<>();
-            for (SearchHit hit : response.getHits().getHits()) {
-                Map<String, Object> result = hit.getSourceAsMap();
-                result.put("score", hit.getScore());
-                results.add(result);
-            }
-
-            return results;
+            return prepareResponse(response);
         } catch (IOException e) {
             throw new RuntimeException("Failed to search documents", e);
         }
     }
+
+    private static List<Map<String, Object>> prepareResponse(SearchResponse response) {
+        List<Map<String, Object>> results = new ArrayList<>();
+        for (SearchHit hit : response.getHits().getHits()) {
+            Map<String, Object> result = hit.getSourceAsMap();
+
+            // Truncate 'content' field if it's too long
+            Object content = result.get("content");
+            if (content instanceof String contentStr) {
+                if (contentStr.length() > 100) {
+                    result.put("content", contentStr.substring(0, 50) + "...");
+                }
+            }
+
+            result.put("score", hit.getScore());
+            results.add(result);
+        }
+        return results;
+    }
+
 
 }
