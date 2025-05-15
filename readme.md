@@ -4,7 +4,8 @@ This project provides a REST API that allows users to submit URLs for crawling. 
 
 In addition, the app provides a search API that allows users to submit queries and retrieve the top 10 pages based on the best match. This app can also be used to crawl internal portals and search within them.
 
-![Application Interface](screenshot/img.png)
+<!-- You can adjust width and height as needed -->
+<img src="screenshot/img.png" alt="Application Interface" width="800" height="auto">
 
 ## Running the Application
 To run the application, you will need Docker and Docker Compose installed on your local machine.
